@@ -1,0 +1,26 @@
+{
+  "name": "pk-salary-tax-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server: Pakistan income tax for salaried individuals, Tax Year 2027",
+  "author": "Sheharyar Ahmed <sheryahmedme1@gmail.com>",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
