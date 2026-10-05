@@ -78,6 +78,13 @@ describe('annual input and rounding', () => {
     expect(r.monthlyTax).toBe(2);
   });
 
+  it('take-home from annual is monthly gross minus monthly tax, each rounded separately', () => {
+    const r = calculateSalaryTax(1_000_002, 'annual'); // gross 83,333.5, tax 4,000 / 12 = 333.33
+    expect(r.monthlyGross).toBe(83_334);
+    expect(r.monthlyTax).toBe(333);
+    expect(r.monthlyTakeHome).toBe(83_001); // (annual - annual tax) / 12 would round to 83,000
+  });
+
   it('decimal input is rounded half up to a whole rupee first', () => {
     expect(calculateSalaryTax(150_000.5, 'monthly').monthlyGross).toBe(150_001);
     expect(calculateSalaryTax(150_000.49, 'monthly').monthlyGross).toBe(150_000);
