@@ -1,0 +1,91 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
+import type { Request, Response } from 'express';
+import { z } from 'zod';
+import { TaxInputError, calculateSalaryTax, formatSummary } from './tax/calc.ts';
+
+const outputSchema = {
+  period: z.enum(['monthly', 'annual']),
+  annualIncome: z.number().describe('Annual taxable income, PKR'),
+  monthlyGross: z.number().describe('Monthly gross salary, PKR'),
+  annualTax: z.number().describe('Annual income tax, PKR'),
+  monthlyTax: z.number().describe('Monthly income tax, PKR'),
+  monthlyTakeHome: z.number().describe('Monthly gross minus monthly tax, PKR'),
+  effectiveRatePercent: z.number().describe('Annual tax as a percent of annual income'),
+  marginalRatePercent: z.number().describe('Rate on the next rupee of income'),
+  slab: z.number().describe('Slab number, 1 to 8'),
+  taxYear: z.string(),
+  sourceStatus: z.string(),
+  roundingNote: z.string(),
+  disclaimer: z.string(),
+};
+
+function buildServer() {
+  const server = new McpServer({ name: 'pk-salary-tax', version: '0.1.0' });
+
+  server.registerTool(
+    'calculate_salary_tax',
+    {
+      title: 'Calculate Pakistan salary tax (Tax Year 2027)',
+      description:
+        'Calculates Pakistan income tax for salaried individuals for Tax Year 2027 (1 July 2026 to 30 June 2027) from a gross salary in PKR, monthly or annual. ' +
+        'Returns annual tax, monthly tax, monthly take-home, effective rate, marginal rate and slab number. ' +
+        'The full amount is treated as taxable: deductions, allowances, tax credits and zakat are excluded. ' +
+        'Accepts 0 to 10 billion PKR. Not tax advice.',
+      inputSchema: {
+        amount: z
+          .number({ error: 'amount must be a number in PKR, for example 150000.' })
+          .describe('Gross salary in PKR, 0 to 10,000,000,000'),
+        period: z.enum(['monthly', 'annual']).describe('Whether amount is a monthly or an annual salary'),
+      },
+      outputSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async ({ amount, period }) => {
+      try {
+        const result = calculateSalaryTax(amount, period);
+        return {
+          content: [{ type: 'text', text: formatSummary(result) }],
+          structuredContent: { ...result },
+        };
+      } catch (err) {
+        if (err instanceof TaxInputError) {
+          return { content: [{ type: 'text', text: err.message }], isError: true };
+        }
+        throw err;
+      }
+    },
+  );
+  return server;
+}
+
+// Extra hostnames (for example a tunnel) allowed past the DNS rebinding check, comma-separated.
+const extraHosts = (process.env.ALLOWED_HOSTS ?? '').split(',').map((h) => h.trim()).filter(Boolean);
+const app = createMcpExpressApp({ allowedHosts: ['localhost', '127.0.0.1', '[::1]', ...extraHosts] });
+
+// Stateless Streamable HTTP: each POST gets a fresh server and transport, no sessions.
+app.post('/mcp', async (req, res) => {
+  const server = buildServer();
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+  res.on('close', () => {
+    transport.close();
+    server.close();
+  });
+  await server.connect(transport);
+  await transport.handleRequest(req, res, req.body);
+});
+
+const notAllowed = (_req: Request, res: Response) =>
+  res.status(405).json({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null });
+app.get('/mcp', notAllowed);
+app.delete('/mcp', notAllowed);
+
+const PORT = Number(process.env.PORT ?? 3000);
+app.listen(PORT, '127.0.0.1', (err) => {
+  if (err) {
+    console.error(`failed to listen on ${PORT}: ${err.message}`);
+    process.exit(1);
+  }
+  console.log(`pk-salary-tax listening on http://localhost:${PORT}/mcp`);
+});
