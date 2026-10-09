@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { DISCLAIMER, MAX_AMOUNT_PKR, TaxInputError, calculateSalaryTax, formatSummary } from './calc.ts';
+import {
+  DISCLAIMER,
+  MAX_AMOUNT_PKR,
+  TaxInputError,
+  calculateSalaryTax,
+  formatSlabTable,
+  formatSummary,
+  getSalaryTaxSlabs,
+} from './calc.ts';
 import { SLAB_TABLE } from './slabs.ts';
 
 describe('test vectors (monthly gross, fully taxable)', () => {
@@ -140,5 +148,48 @@ describe('every result carries tax year, source status, rounding note and discla
     expect(summary).toContain('Monthly tax: Rs 6,000.');
     expect(summary).toContain('Monthly take-home: Rs 144,000.');
     expect(summary).toContain('Marginal rate: 11% (slab 3 of 8).');
+  });
+});
+
+describe('slab table', () => {
+  const t = getSalaryTaxSlabs();
+  const text = formatSlabTable(t);
+  const lines = text.split('\n');
+  const pkr = (n: number) => `Rs ${n.toLocaleString('en-US')}`;
+
+  it('returns all 8 slabs unchanged with tax year, version, source status and disclaimer', () => {
+    expect(t.slabs).toHaveLength(8);
+    expect(t.slabs).toEqual(SLAB_TABLE.slabs);
+    expect(t.taxYear).toBe(SLAB_TABLE.taxYear);
+    expect(t.version).toBe(SLAB_TABLE.version);
+    expect(t.sourceStatus).toBe(SLAB_TABLE.sourceStatus);
+    expect(t.disclaimer).toBe(DISCLAIMER);
+  });
+
+  it('returns a copy, so a caller cannot change the table', () => {
+    expect(getSalaryTaxSlabs().slabs[0]).not.toBe(SLAB_TABLE.slabs[0]);
+  });
+
+  it('text has one line per slab, in order', () => {
+    const slabLines = lines.filter((l) => l.startsWith('Slab '));
+    expect(slabLines.map((l) => l.split(':')[0])).toEqual(SLAB_TABLE.slabs.map((s) => `Slab ${s.slab}`));
+  });
+
+  it.each(SLAB_TABLE.slabs)('slab $slab line states its bounds, fixed tax and rate', (s) => {
+    const line = lines.find((l) => l.startsWith(`Slab ${s.slab}:`))!;
+    if (s.from > 0) expect(line).toContain(`above ${pkr(s.from)}`);
+    if (s.to === null) expect(line).not.toContain('up to');
+    else expect(line).toContain(`up to ${pkr(s.to)}`);
+    if (s.ratePercent > 0) expect(line).toContain(`${s.ratePercent}% of income above ${pkr(s.from)}`);
+    else expect(line).toContain('no tax');
+    if (s.fixedTax > 0) expect(line).toContain(`${pkr(s.fixedTax)} plus`);
+    else expect(line).not.toContain('plus');
+  });
+
+  it('text carries tax year, source status, disclaimer and the boundary rule', () => {
+    for (const part of [t.taxYear, t.sourceStatus, t.disclaimer, 'Each slab includes its upper bound.']) {
+      expect(text).toContain(part);
+    }
+    expect(text).not.toContain('—'); // no em-dashes
   });
 });
