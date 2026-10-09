@@ -3,7 +3,13 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { TaxInputError, calculateSalaryTax, formatSummary } from './tax/calc.ts';
+import {
+  TaxInputError,
+  calculateSalaryTax,
+  formatSlabTable,
+  formatSummary,
+  getSalaryTaxSlabs,
+} from './tax/calc.ts';
 
 const outputSchema = {
   period: z.enum(['monthly', 'annual']),
@@ -18,6 +24,22 @@ const outputSchema = {
   taxYear: z.string(),
   sourceStatus: z.string(),
   roundingNote: z.string(),
+  disclaimer: z.string(),
+};
+
+const slabsOutputSchema = {
+  taxYear: z.string(),
+  version: z.string().describe('Slab table version'),
+  sourceStatus: z.string(),
+  slabs: z.array(
+    z.object({
+      slab: z.number().describe('Slab number, 1 to 8'),
+      from: z.number().describe('Lower bound of annual taxable income, PKR. The slab starts above it (slab 1 starts at 0)'),
+      to: z.number().nullable().describe('Upper bound of annual taxable income, PKR, inclusive. Null for the top slab'),
+      fixedTax: z.number().describe('Fixed annual tax for the slab, PKR'),
+      ratePercent: z.number().describe('Rate charged on income above the lower bound'),
+    }),
+  ),
   disclaimer: z.string(),
 };
 
@@ -55,6 +77,26 @@ function buildServer() {
         }
         throw err;
       }
+    },
+  );
+
+  server.registerTool(
+    'get_salary_tax_slabs',
+    {
+      title: 'Pakistan salary tax slabs (Tax Year 2027)',
+      description:
+        'Lists the 8 Pakistan income tax slabs for salaried individuals for Tax Year 2027 (1 July 2026 to 30 June 2027). ' +
+        "Each slab gives an annual taxable income range in PKR, a fixed tax, and a rate on the income above the slab's lower bound. " +
+        'Annual amounts only. Deductions, allowances, tax credits and zakat are excluded. Not tax advice.',
+      outputSchema: slabsOutputSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async () => {
+      const table = getSalaryTaxSlabs();
+      return {
+        content: [{ type: 'text', text: formatSlabTable(table) }],
+        structuredContent: { ...table },
+      };
     },
   );
   return server;
