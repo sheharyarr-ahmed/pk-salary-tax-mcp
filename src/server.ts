@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
-import type { Request, Response } from 'express';
+import { hostHeaderValidation } from '@modelcontextprotocol/sdk/server/middleware/hostHeaderValidation.js';
+import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
   TaxInputError,
@@ -102,9 +102,21 @@ function buildServer() {
   return server;
 }
 
-// Extra hostnames (for example a tunnel) allowed past the DNS rebinding check, comma-separated.
-const extraHosts = (process.env.ALLOWED_HOSTS ?? '').split(',').map((h) => h.trim()).filter(Boolean);
-const app = createMcpExpressApp({ allowedHosts: ['localhost', '127.0.0.1', '[::1]', ...extraHosts] });
+// Hostnames allowed past the DNS rebinding check: localhost, the Vercel production domain and
+// this deployment's URL (set by Vercel), and ALLOWED_HOSTS (comma-separated, for example a tunnel).
+const allowedHosts = [
+  'localhost',
+  '127.0.0.1',
+  '[::1]',
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ?? '',
+  process.env.VERCEL_URL ?? '',
+  ...(process.env.ALLOWED_HOSTS ?? '').split(',').map((h) => h.trim()),
+].filter(Boolean);
+
+// Same setup as the SDK's createMcpExpressApp. Vercel only detects an Express app whose entry file imports express.
+const app = express();
+app.use(hostHeaderValidation(allowedHosts));
+app.use(express.json());
 
 // Stateless Streamable HTTP: each POST gets a fresh server and transport, no sessions.
 app.post('/mcp', async (req, res) => {
@@ -123,11 +135,16 @@ const notAllowed = (_req: Request, res: Response) =>
 app.get('/mcp', notAllowed);
 app.delete('/mcp', notAllowed);
 
-const PORT = Number(process.env.PORT ?? 3000);
-app.listen(PORT, '127.0.0.1', (err) => {
-  if (err) {
-    console.error(`failed to listen on ${PORT}: ${err.message}`);
-    process.exit(1);
-  }
-  console.log(`pk-salary-tax listening on http://localhost:${PORT}/mcp`);
-});
+// On Vercel (VERCEL=1) the default export is the handler. Listen only when run locally.
+if (!process.env.VERCEL) {
+  const PORT = Number(process.env.PORT ?? 3000);
+  app.listen(PORT, '127.0.0.1', (err) => {
+    if (err) {
+      console.error(`failed to listen on ${PORT}: ${err.message}`);
+      process.exit(1);
+    }
+    console.log(`pk-salary-tax listening on http://localhost:${PORT}/mcp`);
+  });
+}
+
+export default app;
