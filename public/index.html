@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PK Salary Tax</title>
+<meta name="description" content="A connector for Claude that calculates Pakistan income tax for salaried individuals for Tax Year 2027.">
+<link rel="icon" href="/icon.png">
+<style>
+  body { max-width: 42rem; margin: 0 auto; padding: 2rem 1rem 4rem; font: 1rem/1.6 system-ui, sans-serif; color: #1c1c1c; background: #fff; }
+  h1 { line-height: 1.2; }
+  h2 { margin-top: 2rem; font-size: 1.15rem; }
+  code { font-family: ui-monospace, monospace; font-size: .92em; overflow-wrap: anywhere; }
+  pre { padding: .75rem; overflow-x: auto; background: #f2f2f2; }
+  a { color: #0d5c52; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e8e8e8; background: #161616; }
+    pre { background: #262626; }
+    a { color: #6fd0c2; }
+  }
+</style>
+</head>
+<body>
+<h1>PK Salary Tax</h1>
+<p>A connector for Claude that calculates Pakistan income tax for salaried individuals for Tax Year 2027 (1 July 2026 to 30 June 2027), and lists the salary tax slabs.</p>
+
+<h2>Connect it</h2>
+<p>In Claude, go to Customize, Connectors, Add, Add custom connector, and paste:</p>
+<pre><code>https://pk-salary-tax-mcp.vercel.app/mcp</code></pre>
+<p>No account or sign-in is needed.</p>
+
+<h2>Tools</h2>
+<ul>
+  <li><code>calculate_salary_tax</code>: takes a gross salary in PKR and whether it is monthly or annual. Returns annual tax, monthly tax, monthly take-home pay, effective rate, marginal rate and slab number.</li>
+  <li><code>get_salary_tax_slabs</code>: takes no input. Lists all 8 salary tax slabs, in annual amounts.</li>
+</ul>
+<p>Both tools are read-only.</p>
+
+<h2>Example prompts</h2>
+<ol>
+  <li>What are the Pakistan salary tax slabs for this tax year?</li>
+  <li>How much tax on a 150,000 monthly salary?</li>
+  <li>I earn Rs 2,400,000 a year. What is my effective tax rate?</li>
+</ol>
+
+<h2>Limits</h2>
+<ul>
+  <li>The rates apply when salary is more than 75% of taxable income.</li>
+  <li>The full amount is treated as taxable: deductions, allowances, tax credits and zakat are excluded.</li>
+  <li>Non-salaried, business and pension income and earlier tax years are not covered.</li>
+  <li>Decimal inputs are rounded half up to a whole rupee first. Annual tax is rounded to the nearest rupee, half up. Monthly tax is annual tax / 12, rounded the same way.</li>
+</ul>
+
+<h2>Troubleshooting</h2>
+<p>If a tool does not run, check that the connector is enabled for the chat. Amounts must be numbers from 0 to 10 billion PKR.</p>
+
+<h2>Source</h2>
+<p>Rates from the Finance Act 2026 (Gazette of Pakistan, 26 June 2026), First Schedule, Part I, Division I, clause (2). <a href="https://download1.fbr.gov.pk/Docs/20266291261044366FinanceAct2026.pdf">Read the Act on the FBR website</a>.</p>
+
+<h2>Before you rely on a result</h2>
+<p>Results are estimates and not tax advice. Check your own position with a tax professional or the FBR before filing.</p>
+
+<h2>Privacy and support</h2>
+<ul>
+  <li><a href="/privacy.html">Privacy policy</a></li>
+  <li>Support: <a href="mailto:sheharyar.softwareengineer@gmail.com">sheharyar.softwareengineer@gmail.com</a></li>
+</ul>
+<p>Not affiliated with the Federal Board of Revenue or the Government of Pakistan.</p>
+</body>
+</html>
