@@ -2,7 +2,7 @@
 
 A connector for Claude that calculates Pakistan income tax for salaried individuals for Tax Year 2027 (1 July 2026 to 30 June 2027), and lists the salary tax slabs.
 
-Documentation: https://pk-salary-tax-mcp.vercel.app/
+Documentation: https://pk-salary-tax-mcp.vercel.app/index.html
 
 ## Connect it
 
