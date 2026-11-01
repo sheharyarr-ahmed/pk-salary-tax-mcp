@@ -13,7 +13,7 @@ export const SLAB_TABLE = {
   version: '2027.1',
   taxYear: 'Tax Year 2027 (1 July 2026 to 30 June 2027)',
   sourceStatus:
-    'Unverified: slab rates come from a secondary source (pkrevenue.com, 28 July 2026) and have not been checked against the primary FBR notification.',
+    'Rates from the Finance Act 2026 (Gazette of Pakistan, 26 June 2026), First Schedule, Part I, Division I, clause (2).',
   slabs: [
     { slab: 1, from: 0, to: 600_000, fixedTax: 0, ratePercent: 0 },
     { slab: 2, from: 600_000, to: 1_200_000, fixedTax: 0, ratePercent: 1 },

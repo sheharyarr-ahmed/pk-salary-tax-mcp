@@ -131,9 +131,11 @@ describe('every result carries tax year, source status, rounding note and discla
   ] as const)('%i %s', (amount, period) => {
     const r = calculateSalaryTax(amount, period);
     expect(r.taxYear).toContain('Tax Year 2027');
-    expect(r.sourceStatus).toContain('Unverified');
+    expect(r.sourceStatus).toContain('Finance Act 2026');
+    expect(r.sourceStatus).not.toContain('Unverified');
     expect(r.roundingNote).toContain('half up');
     expect(r.disclaimer).toBe(DISCLAIMER);
+    expect(r.disclaimer).toContain('75%');
     expect(r.disclaimer).toContain('Not tax advice');
 
     const summary = formatSummary(r);

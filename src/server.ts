@@ -53,6 +53,7 @@ function buildServer() {
       description:
         'Calculates Pakistan income tax for salaried individuals for Tax Year 2027 (1 July 2026 to 30 June 2027) from a gross salary in PKR, monthly or annual. ' +
         'Returns annual tax, monthly tax, monthly take-home, effective rate, marginal rate and slab number. ' +
+        'These rates apply when salary is more than 75% of taxable income. ' +
         'The full amount is treated as taxable: deductions, allowances, tax credits and zakat are excluded. ' +
         'Accepts 0 to 10 billion PKR. Not tax advice.',
       inputSchema: {
@@ -87,7 +88,7 @@ function buildServer() {
       description:
         'Lists the 8 Pakistan income tax slabs for salaried individuals for Tax Year 2027 (1 July 2026 to 30 June 2027). ' +
         "Each slab gives an annual taxable income range in PKR, a fixed tax, and a rate on the income above the slab's lower bound. " +
-        'Annual amounts only. Deductions, allowances, tax credits and zakat are excluded. Not tax advice.',
+        'Annual amounts only. These rates apply when salary is more than 75% of taxable income. Deductions, allowances, tax credits and zakat are excluded. Not tax advice.',
       outputSchema: slabsOutputSchema,
       annotations: { readOnlyHint: true },
     },

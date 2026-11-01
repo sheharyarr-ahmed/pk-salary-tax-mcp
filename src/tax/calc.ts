@@ -26,7 +26,7 @@ export const ROUNDING_NOTE =
   'Amounts are rounded to the nearest rupee, half up: the input amount, monthly gross from an annual amount (annual / 12), annual tax, and monthly tax (annual tax / 12).';
 
 export const DISCLAIMER =
-  'Estimate for salaried individuals, Tax Year 2027. Treats the full amount as taxable: deductions, allowances, tax credits and zakat are excluded. Not tax advice.';
+  'Estimate for salaried individuals, Tax Year 2027. Applies when salary is more than 75% of taxable income. Treats the full amount as taxable: deductions, allowances, tax credits and zakat are excluded. Not tax advice.';
 
 export class TaxInputError extends Error {
   override name = 'TaxInputError';
