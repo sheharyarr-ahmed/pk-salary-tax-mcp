@@ -63,7 +63,7 @@ function buildServer() {
         period: z.enum(['monthly', 'annual']).describe('Whether amount is a monthly or an annual salary'),
       },
       outputSchema,
-      annotations: { readOnlyHint: true },
+      annotations: { title: 'Calculate Pakistan salary tax (Tax Year 2027)', readOnlyHint: true },
     },
     async ({ amount, period }) => {
       try {
@@ -90,7 +90,7 @@ function buildServer() {
         "Each slab gives an annual taxable income range in PKR, a fixed tax, and a rate on the income above the slab's lower bound. " +
         'Annual amounts only. These rates apply when salary is more than 75% of taxable income. Deductions, allowances, tax credits and zakat are excluded. Not tax advice.',
       outputSchema: slabsOutputSchema,
-      annotations: { readOnlyHint: true },
+      annotations: { title: 'Pakistan salary tax slabs (Tax Year 2027)', readOnlyHint: true },
     },
     async () => {
       const table = getSalaryTaxSlabs();
